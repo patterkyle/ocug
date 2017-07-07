@@ -3,6 +3,7 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
+
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.89" :scope "provided"]
                  [mount "0.1.11"]
@@ -22,11 +23,19 @@
 
   :source-paths ["src/clj"]
   :resource-paths ["resources"]
-
-  :plugins [[lein-cljsbuild "1.1.5"]]
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
+  :plugins [[lein-ring "0.12.0"]
+
+            [lein-cljsbuild "1.1.5"]]
+
   :figwheel {:css-dirs ["resources/public/css"]}
+
+  :migratus {:store :database
+             :migration-dir "migrations"
+             :db ~(get (System/getenv) "DATABASE_URL")}
+
+  :ring {:handler og.core/app :port 12358}
 
   :cljsbuild
   {:builds
@@ -56,5 +65,4 @@
              :uberjar {:aot :all}}
 
   :target-path "target/%s"
-  :ring {:handler og.core/app}
   :main ^:skip-aot og.core)

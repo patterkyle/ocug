@@ -5,10 +5,10 @@
             [ring.adapter.jetty :as jetty])
   (:gen-class))
 
-(defroutes site-routes
+(defroutes app
   (GET "/" [] (response/file-response "index.html" {:root "resources/public"}))
   (route/resources "/")
   (route/not-found "not found"))
 
 (defn -main [& args]
-  (jetty/run-jetty site-routes {:port 1337}))
+  (jetty/run-jetty app {:port 12358}))
