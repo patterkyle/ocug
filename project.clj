@@ -1,5 +1,5 @@
 (defproject og "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+  :description "TODO: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
@@ -16,6 +16,7 @@
                  [metosin/compojure-api "1.1.10"]
                  [org.postgresql/postgresql "42.1.1"]
                  [com.layerware/hugsql "0.4.7"]
+                 [com.taoensso/timbre "4.10.0"]
                  [migratus "0.9.7"]
                  [reagent "0.7.0"]
                  [secretary "1.2.3"]
@@ -25,17 +26,20 @@
   :resource-paths ["resources"]
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
-  :plugins [[lein-ring "0.12.0"]
+  :plugins [[lein-cljsbuild "1.1.5"]
+            [migratus-lein "0.5.0"]]
 
-            [lein-cljsbuild "1.1.5"]]
-
-  :figwheel {:css-dirs ["resources/public/css"]}
+  :figwheel {:css-dirs ["resources/public/css"]
+             :ring-handler og.core/app}
 
   :migratus {:store :database
              :migration-dir "migrations"
-             :db ~(get (System/getenv) "DATABASE_URL")}
-
-  :ring {:handler og.core/app :port 12358}
+             ;; :db ~(get (system/getenv) "database_url")
+             :db {:classname "com.postgresql.driver"
+                  :subprotocol "postgresql"
+                  :subname "//localhost:5432/og"
+                  :user "ogmin"
+                  :password "ogminpwd"}}
 
   :cljsbuild
   {:builds
@@ -55,7 +59,7 @@
      :compiler     {:main            og.core
                     :output-to       "resources/public/js/compiled/app.js"
                     :optimizations   :advanced
-                    :closure-defines {goog.DEBUG false}
+                    :closure-defines {goog.debug false}
                     :pretty-print    false}}]}
 
   :profiles {:dev {:dependencies [[binaryage/devtools "0.8.2"]
