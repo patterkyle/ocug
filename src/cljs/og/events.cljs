@@ -1,5 +1,6 @@
 (ns og.events
-  (:require [cljs.spec :as spec]
+  (:require
+   ;; [cljs.spec :as spec]
             [re-frame.core :as re-frame]
             [og.db :as db]))
 

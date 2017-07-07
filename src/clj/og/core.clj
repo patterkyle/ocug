@@ -3,7 +3,8 @@
             [compojure.route :as route]
             [ring.middleware.defaults :as defaults]
             [ring.util.http-response :as response]
-            [ring.adapter.jetty :as jetty])
+            [ring.adapter.jetty :as jetty]
+            [clojure.spec.alpha :as s])
   (:gen-class))
 
 (defroutes app-routes
@@ -14,4 +15,4 @@
 (def app (defaults/wrap-defaults app-routes defaults/api-defaults))
 
 (defn -main [& args]
-  (jetty/run-jetty app {:port 12358}))
+  (jetty/run-jetty app {:port 3449}))
