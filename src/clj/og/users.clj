@@ -1,11 +1,47 @@
 (ns og.users
-  (:require [clojure.set :refer [rename-keys]]
-            [og.sql :as sql]
-            [buddy.hashers :as hashers]))
+  (:require [clojure.future :refer :all]
+            [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]
+            [clojure.spec.gen.alpha :as gen] ;TODO remove me?
+            [com.gfredericks.test.chuck.generators :as cgen]
+            [clojure.set :refer [rename-keys]]
+            [buddy.hashers :as hashers]
+            [og.config :as config]
+            [og.sql :as sql]))
 
-(defn- from-db
-  [user]
-  (rename-keys user {:user_role :role :active :active?}))
+;; spec
+;; --------------------
+
+(def ocu-email-regex #"[a-zA-Z0-9]+@(my\.)?okcu\.edu")
+(def bcrypt-regex #"bcrypt\+sha512\$[a-f0-9]+\$[a-f0-9]+")
+
+(s/def ::id (s/and int? (comp not neg?)))
+(s/def ::email (s/with-gen
+                 (s/and string? (partial re-find ocu-email-regex))
+                 #(cgen/string-from-regex ocu-email-regex)))
+(s/def ::password (s/with-gen
+                    (s/and string? (partial re-find bcrypt-regex))
+                    #(cgen/string-from-regex bcrypt-regex)))
+(s/def ::role #{"student" "faculty" "admin"})
+(s/def ::active? boolean?)
+
+(s/def ::user (s/keys :req-un [::id ::email ::password ::role ::active?]))
+(s/def ::users (s/coll-of ::user :distinct true))
+
+;; --------------------
+
+(s/def ::user_role ::role)
+(s/def ::active ::active?)
+
+(s/fdef from-db
+        :args (s/cat :db-user
+                     (s/keys
+                      :req-un [::id ::email ::password ::user_role ::active]))
+        :ret ::user)
+
+(defn from-db
+  [db-user]
+  (rename-keys db-user {:user_role :role :active :active?}))
 
 (defn get-all
   [db]
@@ -46,3 +82,8 @@
 (defn toggle-activation! [db {:keys [id]}]
   (if-let [user (get-by-id db {:id id})]
     (sql/change-activation db (update user :active not))))
+
+;; --------------------
+
+(if config/debug?
+  (stest/instrument `from-db))

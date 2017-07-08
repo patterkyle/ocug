@@ -7,15 +7,14 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.89" :scope "provided"]
                  [org.clojure/test.check "0.9.0"]
-                 [com.gfredericks/test.chuck "0.2.7"]
                  [clojure-future-spec "1.9.0-alpha17"]
+                 [com.gfredericks/test.chuck "0.2.7"]
                  [ring/ring-core "1.6.1"]
                  [ring/ring-defaults "0.3.0"]
                  [ring/ring-jetty-adapter "1.6.1"]
                  [metosin/ring-http-response "0.9.0"]
                  [environ "1.1.0"]
                  [compojure "1.6.0"]
-                 [mount "0.1.11"]
                  [buddy "1.3.0"]
                  [org.postgresql/postgresql "42.1.1"]
                  [com.layerware/hugsql "0.4.7"]
@@ -52,7 +51,7 @@
   {:builds
    [{:id           "dev"
      :source-paths ["src/cljs"]
-     ;; :figwheel     {:on-jsload "og.core/mount-root"}
+     :figwheel     {:on-jsload "og.core/mount-root"}
      :compiler     {:main                 og.core
                     :output-to            "resources/public/js/compiled/app.js"
                     :output-dir           "resources/public/js/compiled/out"
