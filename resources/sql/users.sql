@@ -5,8 +5,7 @@ select * from users
 select * from users where id = :id
 
 -- :name create-user :! :n
-insert into users (email, password, role)
-values (:email, :password, :role)
+insert into users (email, password) values (:email, :password)
 
 -- :name delete-user :! :n
 delete from users where id = :id
@@ -15,7 +14,7 @@ delete from users where id = :id
 update users set password = :password where id = :id
 
 -- :name change-role :! :n
-update users set role = :role where id = :id
+update users set user_role = :role where id = :id
 
 -- :name change-activation :! :n
 update users set active = :active where id = :id
