@@ -1,4 +1,4 @@
-(ns og.routes
+(ns ocug.routes
   (:require-macros [secretary.core :refer [defroute]])
   (:import goog.History)
   (:require [goog.events :as events]

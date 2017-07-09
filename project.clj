@@ -1,4 +1,4 @@
-(defproject og "0.1.0-SNAPSHOT"
+(defproject ocug "0.1.0-SNAPSHOT"
   :description "TODO: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -34,25 +34,32 @@
             [lein-environ "1.1.0"]
             [migratus-lein "0.5.0"]]
 
-  :profiles {:dev {:dependencies [[binaryage/devtools "0.8.2"]
-                                  [figwheel-sidecar "0.5.9"]
-                                  [com.cemerick/piggieback "0.2.1"]]
-                   :plugins      [[lein-figwheel "0.5.9"]]}
+  :profiles {:dev-local {:dependencies [[binaryage/devtools "0.8.2"]
+                                        [figwheel-sidecar "0.5.9"]
+                                        [com.cemerick/piggieback "0.2.1"]]
+                         :plugins      [[lein-figwheel "0.5.9"]]}
+
+             :dev-env-vars {}
+             :test-env-vars {}
+
+             :dev [:dev-local :dev-env-vars]
+             :test [:test-env-vars]
+
              :uberjar {:aot :all}}
 
   :figwheel {:css-dirs ["resources/public/css"]
-             :ring-handler og.core/app}
+             :ring-handler ocug.core/app}
 
   :migratus {:store :database
              :migration-dir "migrations"
-             :db "jdbc:postgresql://localhost/og?user=ogmin&password=ogminpwd"}
+             :db ~(get (System/getenv) "DATABASE_URL")}
 
   :cljsbuild
   {:builds
    [{:id           "dev"
      :source-paths ["src/cljs"]
-     :figwheel     {:on-jsload "og.core/mount-root"}
-     :compiler     {:main                 og.core
+     :figwheel     {:on-jsload "ocug.core/mount-root"}
+     :compiler     {:main                 ocug.core
                     :output-to            "resources/public/js/compiled/app.js"
                     :output-dir           "resources/public/js/compiled/out"
                     :asset-path           "js/compiled/out"
@@ -62,11 +69,11 @@
                                            {:features-to-install :all}}}}
     {:id           "min"
      :source-paths ["src/cljs"]
-     :compiler     {:main            og.core
+     :compiler     {:main            ocug.core
                     :output-to       "resources/public/js/compiled/app.js"
                     :optimizations   :advanced
                     :closure-defines {goog.debug false}
                     :pretty-print    false}}]}
 
   :target-path "target/%s"
-  :main ^:skip-aot og.core)
+  :main ^:skip-aot ocug.core)

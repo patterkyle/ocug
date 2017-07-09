@@ -1,10 +1,10 @@
-(ns og.core
+(ns ocug.core
   (:require [reagent.core :as reagent]
             [re-frame.core :as re-frame]
-            [og.views :as views]
-            [og.routes :as routes]
-            [og.subs]
-            [og.events]))
+            [ocug.views :as views]
+            [ocug.routes :as routes]
+            [ocug.subs]
+            [ocug.events]))
 
 (defn mount-root []
   (re-frame/clear-subscription-cache!)

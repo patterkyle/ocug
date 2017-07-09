@@ -1,4 +1,4 @@
-(ns og.sql
+(ns ocug.sql
   (:require [hugsql.core :as hugsql]))
 
 (defn def-sql-fns [sql-files]

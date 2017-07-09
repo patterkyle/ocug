@@ -1,13 +1,13 @@
-(ns og.users
+(ns ocug.users
   (:require [clojure.future :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.spec.test.alpha :as stest]
             [clojure.spec.gen.alpha :as gen] ;TODO remove me?
-            [com.gfredericks.test.chuck.generators :as cgen]
             [clojure.set :refer [rename-keys]]
+            [com.gfredericks.test.chuck.generators :as cgen]
+            [environ.core :refer [env]]
             [buddy.hashers :as hashers]
-            [og.config :as config]
-            [og.sql :as sql]))
+            [ocug.sql :as sql]))
 
 ;; spec
 ;; --------------------
@@ -43,6 +43,8 @@
 (defn from-db
   [db-user]
   (rename-keys db-user {:user_role :role :active :active?}))
+
+;; (s/fdef)
 
 (defn get-all
   [db]
@@ -89,5 +91,5 @@
 (defn make-instruments []
   (stest/instrument `from-db))
 
-(if config/debug?
+(if (env :debug?)
   (make-instruments))

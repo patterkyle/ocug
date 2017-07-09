@@ -1,4 +1,4 @@
-(ns og.views
+(ns ocug.views
   (:require [re-frame.core :as re-frame]))
 
 (defn home-panel []

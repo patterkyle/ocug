@@ -1,8 +1,6 @@
-(ns og.events
-  (:require
-   ;; [cljs.spec :as spec]
-            [re-frame.core :as re-frame]
-            [og.db :as db]))
+(ns ocug.events
+  (:require [re-frame.core :as re-frame]
+            [ocug.db :as db]))
 
 ;; interceptors
 ;; --------------------
