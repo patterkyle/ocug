@@ -15,7 +15,7 @@
 (def ocu-email-regex #"[a-zA-Z0-9]+@(my\.)?okcu\.edu")
 (def bcrypt-regex #"bcrypt\+sha512\$[a-f0-9]+\$[a-f0-9]+")
 
-(s/def ::id (s/and int? (comp not neg?)))
+(s/def ::id nat-int?)
 (s/def ::email (s/with-gen
                  (s/and string? (partial re-find ocu-email-regex))
                  #(cgen/string-from-regex ocu-email-regex)))
@@ -37,7 +37,8 @@
         :args (s/cat :db-user
                      (s/keys
                       :req-un [::id ::email ::password ::user_role ::active]))
-        :ret ::user)
+        :ret ::user
+        :fn #(= (vals (-> % :args :db-user)) (vals (:ret %))))
 
 (defn from-db
   [db-user]
@@ -85,5 +86,8 @@
 
 ;; --------------------
 
-(if config/debug?
+(defn make-instruments []
   (stest/instrument `from-db))
+
+(if config/debug?
+  (make-instruments))
