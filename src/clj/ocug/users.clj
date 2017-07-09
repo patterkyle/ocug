@@ -32,11 +32,11 @@
 
 (s/def ::user_role ::role)
 (s/def ::active ::active?)
+(s/def ::db-user (s/keys
+                  :req-un [::id ::email ::password ::user_role ::active]))
 
 (s/fdef from-db
-        :args (s/cat :db-user
-                     (s/keys
-                      :req-un [::id ::email ::password ::user_role ::active]))
+        :args (s/cat :db-user ::db-user)
         :ret ::user
         :fn #(= (vals (-> % :args :db-user)) (vals (:ret %))))
 
@@ -44,7 +44,7 @@
   [db-user]
   (rename-keys db-user {:user_role :role :active :active?}))
 
-;; (s/fdef)
+;; --------------------
 
 (defn get-all
   [db]
@@ -91,5 +91,5 @@
 (defn make-instruments []
   (stest/instrument `from-db))
 
-(if (env :debug?)
+(if (:debug? env)
   (make-instruments))
