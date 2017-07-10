@@ -4,10 +4,9 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.89" :scope "provided"]
-                 [org.clojure/test.check "0.9.0"]
-                 [clojure-future-spec "1.9.0-alpha17"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
+                 [org.clojure/clojurescript "1.9.671" :scope "provided"]
+                 [org.clojure/test.check "0.10.0-alpha2"]
                  [com.gfredericks/test.chuck "0.2.7"]
                  [ring/ring-core "1.6.1"]
                  [ring/ring-defaults "0.3.0"]
@@ -30,14 +29,14 @@
                                     "target"
                                     "figwheel_server.log"]
 
-  :plugins [[lein-cljsbuild "1.1.5"]
+  :plugins [[lein-cljsbuild "1.1.7-SNAPSHOT"]
             [lein-environ "1.1.0"]
             [migratus-lein "0.5.0"]]
 
-  :profiles {:dev-local {:dependencies [[binaryage/devtools "0.8.2"]
-                                        [figwheel-sidecar "0.5.9"]
+  :profiles {:dev-local {:dependencies [[binaryage/devtools "0.9.4"]
+                                        [figwheel-sidecar "0.5.11"]
                                         [com.cemerick/piggieback "0.2.1"]]
-                         :plugins      [[lein-figwheel "0.5.9"]]}
+                         :plugins      [[lein-figwheel "0.5.11"]]}
 
              :dev-env-vars {}
              :test-env-vars {}

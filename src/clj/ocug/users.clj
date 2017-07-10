@@ -1,5 +1,6 @@
 (ns ocug.users
-  (:require [clojure.future :refer :all]
+  (:require
+   ;; [clojure.future :refer :all]
             [clojure.spec.alpha :as s]
             [clojure.spec.test.alpha :as stest]
             [clojure.spec.gen.alpha :as gen] ;TODO remove me?
