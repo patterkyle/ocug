@@ -4,8 +4,8 @@ select * from users
 -- :name get-user :1
 select * from users where id = :id
 
--- :name create-user :! :n
-insert into users (email, password) values (:email, :password)
+-- :name create-user :<! :1
+insert into users (email, password) values (:email, :password) returning id
 
 -- :name delete-user :! :n
 delete from users where id = :id

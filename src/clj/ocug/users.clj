@@ -18,13 +18,16 @@
 (s/def ::email (s/with-gen
                  (s/and string? (partial re-find ocu-email-regex))
                  #(cgen/string-from-regex ocu-email-regex)))
-(s/def ::password (s/with-gen
-                    (s/and string? (partial re-find bcrypt-regex))
-                    #(cgen/string-from-regex bcrypt-regex)))
+(s/def :unencrypted/password (s/and string? (partial re-find #".+")))
+(s/def :encrypted/password (s/with-gen
+                             (s/and string? (partial re-find bcrypt-regex))
+                             #(cgen/string-from-regex bcrypt-regex)))
 (s/def ::role #{"student" "faculty" "admin"})
 (s/def ::active? boolean?)
 
-(s/def ::user (s/keys :req-un [::id ::email ::password ::role ::active?]))
+(s/def ::user-credentials (s/keys :req-un [::email :unencrypted/password]))
+(s/def ::user (s/keys :req-un [::id ::email :encrypted/password
+                               ::role ::active?]))
 (s/def ::users (s/coll-of ::user :distinct true))
 
 ; --------------------
@@ -32,7 +35,8 @@
 (s/def ::user_role ::role)
 (s/def ::active ::active?)
 (s/def ::db-user (s/keys
-                  :req-un [::id ::email ::password ::user_role ::active]))
+                  :req-un [::id ::email :encrypted/password
+                           ::user_role ::active]))
 
 (s/fdef from-db
         :args (s/cat :db-user ::db-user)
@@ -60,15 +64,31 @@
   [db-url]
   (map from-db (sql/get-users db-url)))
 
-(defn- get-by-id
+(s/fdef get-by-id
+        :args (s/cat :db-url ::db-url
+                     :user (s/spec (s/keys :req-un [::id])))
+        :ret ::user)
+
+(defn get-by-id
   [db-url user]
   (-> (sql/get-user db-url user) first from-db))
 
-(defn- get-by-email-and-password
+(s/fdef get-by-email-and-password
+        :args (s/cat :db ::db-url
+                     :user ::user-credentials)
+        :ret ::user)
+
+(defn get-by-email-and-password
   [db-url {:keys [email password]}]
   (first (filter #(and (= (:email %) email)
                        (hashers/check password (:password %)))
                  (get-all db-url))))
+
+(s/fdef get-one
+        :args
+        (s/cat :db ::db-url
+               :user ::user-credentials)
+        :ret ::user)
 
 (defn get-one
   [db-url user]
@@ -77,15 +97,27 @@
     (and (:email user)
          (:password user)) (get-by-email-and-password db-url user)))
 
+(s/fdef create!
+        :args (s/cat :db ::db-url
+                     :user ::user-credentials)
+        :ret (s/nilable ::user))
+
 (defn create!
   [db-url {:keys [email password] :as user}]
-  (let [account-exists? (some #{email} (map :email (get-all db-url)))]
-    (if-not account-exists?
-      (sql/create-user db-url
-                       (assoc user :password (hashers/encrypt password))))))
+  (if-not (some #{email} (map :email (get-all db-url)))
+    (get-one db-url
+             (sql/create-user db-url (assoc user :password
+                                            (hashers/encrypt password))))))
+
+(s/fdef delete!
+        :args (s/cat :db ::db-url
+                     :user ::user-credentials)
+        :ret boolean?)
 
 (defn delete! [db-url user]
-  (sql/delete-user db-url user))
+  (if-let [u (get-one db-url user)]
+    (= 1 (sql/delete-user db-url user))
+    false))
 
 (defn change-password! [db-url {:keys [id password]}]
   (sql/change-password db-url {:id id :password (hashers/encrypt password)}))
@@ -100,8 +132,10 @@
 ;; --------------------
 
 (defn make-instruments []
-  (stest/instrument `from-db)
-  (stest/instrument `get-all))
+  (let [fns [`from-db `get-all `get-by-id `get-by-email-and-password `get-one
+             `create! `delete!]]
+    (for [f fns]
+      (stest/instrument f))))
 
 (if (:debug? env)
   (make-instruments))
