@@ -1,9 +1,7 @@
 (ns ocug.users
-  (:require
-   ;; [clojure.future :refer :all]
-            [clojure.spec.alpha :as s]
-            [clojure.spec.test.alpha :as stest]
-            [clojure.spec.gen.alpha :as gen] ;TODO remove me?
+  (:require [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest] ;TODO rm?
+            [clojure.spec.gen.alpha :as gen] ;TODO rm?
             [clojure.set :refer [rename-keys]]
             [com.gfredericks.test.chuck.generators :as cgen]
             [environ.core :refer [env]]
@@ -29,7 +27,7 @@
 (s/def ::user (s/keys :req-un [::id ::email ::password ::role ::active?]))
 (s/def ::users (s/coll-of ::user :distinct true))
 
-;; --------------------
+; --------------------
 
 (s/def ::user_role ::role)
 (s/def ::active ::active?)
@@ -45,52 +43,65 @@
   [db-user]
   (rename-keys db-user {:user_role :role :active :active?}))
 
-;; --------------------
+; --------------------
+
+(def db-url-regex
+  #"jdbc:[a-zA-Z]+://localhost/[a-zA-Z]+\?user=[a-zA-Z0-9]+\&password=.+")
+
+(s/def ::db-url (s/with-gen
+                  (s/and string? (partial re-find db-url-regex))
+                  #(cgen/string-from-regex db-url-regex)))
+
+(s/fdef get-all
+        :args (s/cat :db-url ::db-url)
+        :ret ::users)
 
 (defn get-all
-  [db]
-  (map from-db (sql/get-users db)))
+  [db-url]
+  (map from-db (sql/get-users db-url)))
 
 (defn- get-by-id
-  [db user]
-  (-> (sql/get-user db user) first from-db))
+  [db-url user]
+  (-> (sql/get-user db-url user) first from-db))
 
 (defn- get-by-email-and-password
-  [db {:keys [email password]}]
+  [db-url {:keys [email password]}]
   (first (filter #(and (= (:email %) email)
                        (hashers/check password (:password %)))
-                 (get-all db))))
+                 (get-all db-url))))
 
 (defn get-one
-  [db user]
+  [db-url user]
   (cond
-    (:id user) (get-by-id db user)
+    (:id user) (get-by-id db-url user)
     (and (:email user)
-         (:password user)) (get-by-email-and-password db user)))
+         (:password user)) (get-by-email-and-password db-url user)))
 
 (defn create!
-  [db {:keys [email password] :as user}]
-  (let [account-exists? (some #{email} (map :email (get-all db)))]
+  [db-url {:keys [email password] :as user}]
+  (let [account-exists? (some #{email} (map :email (get-all db-url)))]
     (if-not account-exists?
-      (sql/create-user db (assoc user :password (hashers/encrypt password))))))
+      (sql/create-user db-url
+                       (assoc user :password (hashers/encrypt password))))))
 
-(defn delete! [db user]
-  (sql/delete-user db user))
+(defn delete! [db-url user]
+  (sql/delete-user db-url user))
 
-(defn change-password! [db {:keys [id password]}]
-  (sql/change-password db {:id id :password (hashers/encrypt password)}))
+(defn change-password! [db-url {:keys [id password]}]
+  (sql/change-password db-url {:id id :password (hashers/encrypt password)}))
 
-(defn change-role! [db {:keys [id role]}]
-  (sql/change-role db {:id id :role role}))
+(defn change-role! [db-url {:keys [id role]}]
+  (sql/change-role db-url {:id id :role role}))
 
-(defn toggle-activation! [db {:keys [id]}]
-  (if-let [user (get-by-id db {:id id})]
-    (sql/change-activation db (update user :active not))))
+(defn toggle-activation! [db-url {:keys [id]}]
+  (if-let [user (get-by-id db-url {:id id})]
+    (sql/change-activation db-url (update user :active not))))
 
 ;; --------------------
 
 (defn make-instruments []
-  (stest/instrument `from-db))
+  (stest/instrument `from-db)
+  (stest/instrument `get-all))
 
 (if (:debug? env)
   (make-instruments))

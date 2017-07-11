@@ -33,8 +33,7 @@
             [lein-environ "1.1.0"]
             [migratus-lein "0.5.0"]]
 
-  :profiles {:dev-local {:dependencies [[binaryage/devtools "0.9.4"]
-                                        [figwheel-sidecar "0.5.11"]
+  :profiles {:dev-local {:dependencies [[figwheel-sidecar "0.5.11"]
                                         [com.cemerick/piggieback "0.2.1"]]
                          :plugins      [[lein-figwheel "0.5.11"]]}
 
