@@ -118,7 +118,8 @@
 
 (defn delete! [db-url user]
   (if-let [u (get-one db-url user)]
-    (= 1 (sql/delete-user db-url user))))
+    (= 1 (sql/delete-user db-url user))
+    false))
 
 (s/def ::new-password :unencrypted/password)
 
@@ -135,12 +136,24 @@
       db-url
       {:id id :new-password (hashers/encrypt new-password)}))))
 
-(defn change-role! [db-url {:keys [id role]}]
-  (sql/change-role db-url {:id id :role role}))
+(s/fdef change-role!
+        :args (s/cat :db ::db-url
+                     :user (s/spec (s/keys :req-un [::id ::new-role])))
+        :ret (s/nilable ::user))
 
-(defn toggle-activation! [db-url {:keys [id]}]
-  (if-let [user (get-by-id db-url {:id id})]
-    (sql/change-activation db-url (update user :active not))))
+(defn change-role! [db-url {:keys [id new-role] :as user}]
+  (if-let [u (get-one db-url user)]
+    (get-one db-url (sql/change-role db-url user))))
+
+(s/fdef toggle-activation!
+        :args (s/cat :db ::db-url
+                     :user (s/spec (s/keys :req-un [::id])))
+        :ret (s/nilable ::user))
+
+(defn toggle-activation! [db-url {:keys [id] :as user}]
+  (if-let [u (get-one db-url user)]
+    (get-one db-url
+             (sql/change-activation db-url (update user :active? not)))))
 
 ;; --------------------
 

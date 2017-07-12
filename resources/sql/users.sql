@@ -17,4 +17,4 @@ update users set password = :new-password where id = :id returning id
 update users set user_role = :new-role where id = :id returning id
 
 -- :name change-activation :<! :1
-update users set active = :new-active where id = :id returning id
+update users set active = :active? where id = :id returning id
