@@ -7,6 +7,7 @@
             [clojure.java.jdbc :as jdbc]
             [migratus.core :as migratus]
             [environ.core :refer [env]]
+            [buddy.hashers :as hashers]
             [ocug.users :as users]))
 
 ;; setup
@@ -61,8 +62,7 @@
   (fn [f]
     (jdbc/with-db-transaction [transaction test-db-url]
       (jdbc/db-set-rollback-only! transaction)
-      (binding [*txn* transaction]
-        (f)))))
+      (binding [*txn* transaction] (f)))))
 
 (users/make-instruments)
 
@@ -95,12 +95,23 @@
 (deftest create!-test
   (is (nil? (users/create! test-db-url ocug-user-credentials))) ;already exists
   (let [new-user (users/create! test-db-url {:email "newuser@okcu.edu"
-                                        :password "newuserpwd"})]
+                                             :password "newuserpwd"})]
     (is (some? new-user))
     (is (user? new-user))))
 
 (deftest delete!-test
-  (let [u (users/create! test-db-url
-                         {:email "test@okcu.edu" :password "testpwd"})]
+  (let [u (users/create! test-db-url {:email "deletetest@okcu.edu"
+                                      :password "deletetestpwd"})]
     (is (users/delete! test-db-url u))
-    (is (not (users/delete! test-db-url {})))))
+    (is (not (users/delete! test-db-url u))))) ;already deleted
+
+(deftest change-password!-test
+  (let [u (users/create! test-db-url {:email "u@my.okcu.edu"
+                                      :password "upwd"})]
+    (is (hashers/check "upwd" (:password u)))
+    (is (users/change-password! test-db-url
+                                (assoc u :new-password "newupwd")))
+    (is (= (dissoc u :password)
+           (dissoc (users/change-password! test-db-url
+                                           (assoc u :new-password "upwd"))
+                   :password)))))

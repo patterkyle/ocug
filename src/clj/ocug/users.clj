@@ -25,7 +25,10 @@
 (s/def ::role #{"student" "faculty" "admin"})
 (s/def ::active? boolean?)
 
-(s/def ::user-credentials (s/keys :req-un [::email :unencrypted/password]))
+(s/def ::user-credentials
+  (s/or :email-and-password (s/keys :req-un [::email :unencrypted/password])
+        :id (s/keys :req-un [::id])))
+
 (s/def ::user (s/keys :req-un [::id ::email :encrypted/password
                                ::role ::active?]))
 (s/def ::users (s/coll-of ::user :distinct true))
@@ -67,7 +70,7 @@
 (s/fdef get-by-id
         :args (s/cat :db-url ::db-url
                      :user (s/spec (s/keys :req-un [::id])))
-        :ret ::user)
+        :ret (s/nilable ::user))
 
 (defn get-by-id
   [db-url user]
@@ -76,7 +79,7 @@
 (s/fdef get-by-email-and-password
         :args (s/cat :db ::db-url
                      :user ::user-credentials)
-        :ret ::user)
+        :ret (s/nilable ::user))
 
 (defn get-by-email-and-password
   [db-url {:keys [email password]}]
@@ -85,10 +88,9 @@
                  (get-all db-url))))
 
 (s/fdef get-one
-        :args
-        (s/cat :db ::db-url
-               :user ::user-credentials)
-        :ret ::user)
+        :args (s/cat :db ::db-url
+                     :user ::user-credentials)
+        :ret (s/nilable ::user))
 
 (defn get-one
   [db-url user]
@@ -116,11 +118,22 @@
 
 (defn delete! [db-url user]
   (if-let [u (get-one db-url user)]
-    (= 1 (sql/delete-user db-url user))
-    false))
+    (= 1 (sql/delete-user db-url user))))
 
-(defn change-password! [db-url {:keys [id password]}]
-  (sql/change-password db-url {:id id :password (hashers/encrypt password)}))
+(s/def ::new-password :unencrypted/password)
+
+(s/fdef change-password!
+        :args (s/cat :db ::db-url
+                     :user (s/spec (s/keys :req-un [::id ::new-password])))
+        :ret (s/nilable ::user))
+
+(defn change-password! [db-url {:keys [id new-password] :as user}]
+  (if-let [u (get-one db-url user)]
+    (get-one
+     db-url
+     (sql/change-password
+      db-url
+      {:id id :new-password (hashers/encrypt new-password)}))))
 
 (defn change-role! [db-url {:keys [id role]}]
   (sql/change-role db-url {:id id :role role}))
